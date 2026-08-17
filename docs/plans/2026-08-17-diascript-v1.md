@@ -311,12 +311,13 @@ describe("parse", () => {
   });
 
   it("parses and/or/not with correct precedence (and binds tighter than or)", () => {
-    const program = parse("x = a and b or c");
+    // Uses real series refs, not bare undeclared names -- would trip no-forward-ref
+    const program = parse("x = open and high or low");
     const [{ expr }] = program as any;
     expect(expr).toEqual({
       kind: "binary", op: "or",
-      left: { kind: "binary", op: "and", left: { kind: "ident", name: "a" }, right: { kind: "ident", name: "b" } },
-      right: { kind: "ident", name: "c" },
+      left: { kind: "binary", op: "and", left: { kind: "ident", name: "open" }, right: { kind: "ident", name: "high" } },
+      right: { kind: "ident", name: "low" },
     });
   });
 
