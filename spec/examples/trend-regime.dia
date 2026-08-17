@@ -1,0 +1,49 @@
+# Trend Regime & Swing Structure
+#
+# A worked example exercising every primitive in the grammar together:
+# an EMA trend filter, ATR-based volatility bands (Wilder-smoothed via
+# prev(), the same technique rsi() uses internally), an RSI veto, swing-
+# high/low tracking via held() (arbitrary-duration state, not a fixed
+# lookback), a daily-timeframe trend confirmation via series() (multi-
+# timeframe read of the SAME instrument, via symbol.ticker()), a
+# session-aware entry condition, and five different visual output types.
+
+input fast_len   = int(20, min=5, max=100)
+input slow_len   = int(50, min=10, max=300)
+input atr_len    = int(14, min=5, max=50)
+input atr_mult   = float(3.0, min=1.0, max=6.0)
+input rsi_len    = int(14, min=5, max=50)
+input band_color = color("#2196F3")
+
+# --- trend filter ---
+fast_ema = ema(close, input.fast_len)
+slow_ema = ema(close, input.slow_len)
+uptrend  = fast_ema > slow_ema
+
+# --- ATR volatility bands, Wilder-smoothed (prev() = this formula's own
+#     previous value — the same recursive technique rsi() uses internally) ---
+atr_raw    = prev(1) * (input.atr_len - 1) / input.atr_len + true_range() / input.atr_len
+upper_band = fast_ema + input.atr_mult * atr_raw
+lower_band = fast_ema - input.atr_mult * atr_raw
+
+# --- swing structure: held() persists a value for however many bars it
+#     takes until the next swing forms — not a fixed n-bar lookback ---
+is_new_swing_high = high > highest(ref(high, 1), 10)
+is_new_swing_low  = low < lowest(ref(low, 1), 10)
+swing_high = held(is_new_swing_high, high)
+swing_low  = held(is_new_swing_low, low)
+
+# --- momentum veto and higher-timeframe confirmation ---
+rsi_ok_long    = rsi(close, input.rsi_len) < 70
+daily_trend_up = close > sma(series(symbol.ticker(), "1d", "close"), 20)
+
+# --- the actual entry condition, combining all of the above ---
+entry_long = uptrend and rsi_ok_long and daily_trend_up and close > swing_high and session.is_open()
+
+# --- outputs: two lines filled between, a band, a marker, a background ---
+fast_line    = line(fast_ema)
+slow_line    = line(slow_ema)
+band_out     = band(upper_band, lower_band, color=input.band_color)
+entry_marker = marker(entry_long, "triangle-up", "green")
+regime_bg    = background(uptrend, "#e8f5e9")
+trend_fill   = fill(fast_line, slow_line, "#90caf9")

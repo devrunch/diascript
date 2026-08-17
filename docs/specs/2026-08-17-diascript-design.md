@@ -83,6 +83,16 @@ One formula per line, `name = expression`. A later line may reference an earlier
 **Built-in derived series** (thin wrappers over the primitives above, provided because they're common enough to name):
 - `true_range()` — `max(high - low, abs(high - ref(close, 1)), abs(low - ref(close, 1)))`
 - `typical_price()` — `(high + low + close) / 3`
+- `rsi(x, n)` — Wilder's RSI. Unlike the two above, this one is genuinely multi-step and recursive, not a one-liner — it's implemented internally as:
+  ```
+  change   = x - ref(x, 1)
+  gain     = max(change, 0)
+  loss     = max(-change, 0)
+  avg_gain = prev(1) * (n-1)/n + gain/n
+  avg_loss = prev(1) * (n-1)/n + loss/n
+  rsi      = 100 - 100 / (1 + avg_gain/avg_loss)
+  ```
+  Shown here to prove it's expressible in the core grammar (an author COULD write this by hand), but shipped as one built-in call because re-deriving Wilder smoothing correctly every time it's needed is exactly the kind of trusted, host-implemented complexity that should live in the engine once, reviewed once, rather than in every formula author's own code.
 
 **Held state (bounded stateful pattern tracking):**
 - `held(condition, value)` — a memory cell that updates to `value` on any bar where `condition` is true, and otherwise carries forward whatever it held on the previous bar, indefinitely (not a fixed `n`-bar lookback like `prev`/`ref` — it can hold the same value for an unbounded number of bars until `condition` fires again). This is what "remember the last swing high until a new one forms" needs — `prev` only reaches back a fixed number of bars, but a swing high can persist for an arbitrary stretch:
@@ -96,6 +106,7 @@ One formula per line, `name = expression`. A later line may reference an earlier
 - `time.dayofweek()`, `time.hour()`, `time.minute()` — derived purely from the current bar's own `time` field (no adapter call — these are pure math over a timestamp already in hand).
 - `session.is_open()` — whether the instrument's exchange session is open at this bar. Resolves through `DataAdapter.getSymbolMeta` (below) — an adapter that doesn't implement session knowledge simply has this always return `true`, degrading gracefully rather than erroring.
 - `symbol.exchange()` — the current instrument's exchange (e.g. `"NSE"`), also via `getSymbolMeta`.
+- `symbol.ticker()` — the current instrument's own symbol string. Exists specifically for the common "same instrument, different timeframe" pattern: `series(symbol.ticker(), "1d", "close")` reads the current symbol at daily resolution, without hardcoding a symbol name into the formula (matching Pine's `syminfo.tickerid` idiom).
 
   `DataAdapter` gains one more (optional) method for these two:
   ```ts
@@ -126,7 +137,7 @@ type IndicatorOutput =
   | { type: "fill"; between: [string, string]; color: string };
 ```
 
-`barcolor(condition, colorIfTrue, colorIfFalse)` — recolors the actual candle/bar itself on bars where `condition` is true (Pine's `barcolor()`). `background(condition, color)` — shades the chart's background on bars where `condition` is true (Pine's `bgcolor()`). `fill(nameA, nameB, color)` — takes the names of two already-declared `line`/`band` outputs from the same definition and fills the region between them (Pine's `fill()`); this is why outputs are named — `fill` references them by name rather than re-deriving the two series itself.
+`barcolor(condition, colorIfTrue, colorIfFalse)` — recolors the actual candle/bar itself on bars where `condition` is true (Pine's `barcolor()`). `background(condition, color)` — shades the chart's background on bars where `condition` is true (Pine's `bgcolor()`). `fill(a, b, color)` — takes two already-declared `line`/`band` outputs (referenced the same way any earlier formula is referenced — a bare identifier, not a string) and fills the region between them (Pine's `fill()`); this is why outputs are named formulas rather than anonymous — `fill` just points at two of them instead of re-deriving the two series itself.
 
 A top-level formula declares its own output shape explicitly, via one of four wrapper functions — no inference, no ambiguity about which of the four shapes a given formula produces:
 
