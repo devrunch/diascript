@@ -190,6 +190,35 @@ Two failure classes, handled differently:
 - **Parse-time errors** (unknown function name, wrong arity, malformed syntax) — rejected before any evaluation happens, with a message pointing at the offending token. This is the primary safety boundary: nothing outside the grammar ever reaches the evaluator.
 - **Evaluation-time errors** (division by zero, insufficient history for a lookback at the start of a series) — degrade to `null`/`NaN` for that point rather than throwing and aborting the whole series computation, mirroring how a real chart shows "no data yet" for the first N bars of a moving average rather than erroring the whole chart.
 
+## Debugging & diagnostics
+
+Rendering and inspection are deliberately separate surfaces. `line()`/`band()`/etc. control what's VISIBLE on a chart; they say nothing about what's INSPECTABLE. Evaluating a script returns both:
+
+```ts
+interface EvaluationResult {
+  outputs: Record<string, IndicatorOutput>;      // only wrapped formulas — the render surface
+  values: Record<string, (number | boolean)[]>;  // every named formula, wrapped or not
+  diagnostics: Diagnostic[];
+}
+```
+
+`values` contains every formula in the file, by name, as a plain array aligned to the bar history — `uptrend`, `entry_long`, any bare intermediate — regardless of whether it was ever wrapped in an output function. The evaluator computes all of these internally anyway (wrapped formulas are the exception, not the rule, in most real scripts); exposing them costs nothing extra and means debugging *any* named value never requires editing the script to temporarily wrap it. This matters most for an AI agent authoring or fixing a script: it can evaluate once and inspect every intermediate by name, the same way it wrote the formula, rather than needing a separate "make this visible first" step.
+
+Evaluation-time degradations (division by zero, insufficient history for a lookback, a `series()` call the adapter couldn't resolve, a missing `getSymbolMeta` defaulting `session.is_open()` to `true`) still degrade to `null`/`NaN` per point — never abort the computation — but each ALSO records a `Diagnostic`:
+
+```ts
+interface Diagnostic {
+  formula: string;       // which named formula this is about
+  message: string;       // human/agent-readable explanation
+  severity: "warning";   // nothing here ever aborts evaluation
+  count: number;         // how many bars this occurred on
+  firstBarIndex: number;
+  lastBarIndex: number;
+}
+```
+
+One entry per distinct `(formula, reason)` pair, aggregated with a count — not one entry per bar. History can be thousands of bars long; a single bad symbol shouldn't produce thousands of identical diagnostics. This is the same bounded-by-construction discipline the rest of the grammar already follows, applied to the diagnostics list itself.
+
 ## Testing
 
 - Golden-value tests: known indicators (RSI, EMA, MACD) computed in `diascript` against a fixed OHLCV fixture, compared to values from an established reference (e.g. `pandas_ta`'s output on the same fixture) within a small tolerance.
@@ -200,6 +229,7 @@ Two failure classes, handled differently:
 - Input tests: bounds enforcement (`int`/`float` reject a value outside `min`/`max` at parse/construction time, not silently clamp or ignore), and a `source` input correctly rebinding a formula to a different series when the host changes it.
 - New output-type tests: `barcolor`/`background`/`fill` each produce the documented shape from a small fixture formula, and the klinecharts adapter maps each to the correct API call.
 - Render adapter tests: given a fixed `IndicatorOutput`, assert the klinecharts adapter calls the expected `klinecharts` API with the expected shape (mocked, not a real chart instance).
+- Diagnostics tests: a formula that degrades on many bars (e.g. a lookback exceeding available history for the first N bars) produces exactly ONE aggregated `Diagnostic` with the correct `count`/`firstBarIndex`/`lastBarIndex`, not one entry per bar. `values` contains an unwrapped intermediate formula's full series even when `outputs` is empty for it.
 
 ## Out of scope for v1 (explicitly deferred, not abandoned)
 
