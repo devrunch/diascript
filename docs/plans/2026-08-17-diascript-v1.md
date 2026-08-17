@@ -570,7 +570,7 @@ git commit -m "feat: recursive-descent parser with reserved-word and no-forward-
 - Consumes: `ASTNode`, `Program` from Task 1/2
 - Produces: `OHLCV`, `EvalContext`, `evaluateNodeAt(node, i, ctx): number | boolean` — the core per-bar recursive evaluator every later primitive plugs into. `evaluateFormulaSeries(expr, ctx): (number|boolean)[]` — runs the bar-by-bar loop for one formula.
 
-- [ ] **Step 1: Write the shared types**
+- [x] **Step 1: Write the shared types**
 
 ```typescript
 // src/engine/types.ts
@@ -628,7 +628,7 @@ export interface EvalContext {
 }
 ```
 
-- [ ] **Step 2: Write the failing tests**
+- [x] **Step 2: Write the failing tests**
 
 ```typescript
 // src/engine/evaluator.test.ts
@@ -699,12 +699,12 @@ describe("evaluateFormulaSeries — point-wise math and comparisons", () => {
 });
 ```
 
-- [ ] **Step 3: Run test to verify it fails**
+- [x] **Step 3: Run test to verify it fails**
 
 Run: `npm test -- evaluator`
 Expected: FAIL — `Cannot find module './evaluator'`
 
-- [ ] **Step 4: Write the evaluator**
+- [x] **Step 4: Write the evaluator**
 
 ```typescript
 // src/engine/evaluator.ts
@@ -807,12 +807,12 @@ function evaluateCall(node: Extract<ASTNode, { kind: "call" }>, i: number, ctx: 
 }
 ```
 
-- [ ] **Step 5: Run test to verify it passes**
+- [x] **Step 5: Run test to verify it passes**
 
 Run: `npm test -- evaluator`
 Expected: PASS — 7 tests
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/engine/types.ts src/engine/evaluator.ts src/engine/evaluator.test.ts
@@ -834,7 +834,7 @@ git commit -m "feat: core per-bar evaluator — point-wise math and comparisons"
 
 Each function operates on the ALREADY-COMPUTED-UP-TO-`i` values of its series argument (built by recursively calling `evaluateNodeAt` for indices `i-n+1..i`, not the whole array — v1 favors correctness/simplicity over performance, recomputing on each call rather than maintaining a running accumulator).
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```typescript
 // src/engine/windowed.test.ts
@@ -883,12 +883,12 @@ describe("windowed functions", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npm test -- windowed`
 Expected: FAIL — `Cannot find module './windowed'`
 
-- [ ] **Step 3: Write the windowed functions**
+- [x] **Step 3: Write the windowed functions**
 
 ```typescript
 // src/engine/windowed.ts
@@ -942,7 +942,7 @@ export function sum(series: number[], n: number, i: number): number {
 }
 ```
 
-- [ ] **Step 4: Wire into the evaluator**
+- [x] **Step 4: Wire into the evaluator**
 
 In `src/engine/evaluator.ts`, add the import and extend `evaluateCall`'s switch. Windowed functions need the FULL series-so-far of their first argument, built by evaluating it at every index up to `i` (not just at `i`) — add a helper:
 
@@ -972,7 +972,7 @@ In `evaluateCall`'s `switch`, before the `default` case. Each result is checked 
 
 (Note: `arg(1)` evaluates the second argument, the window length `n`, at index `i` — since `n` is always a plain number literal per the grammar, this just returns that literal.)
 
-- [ ] **Step 5: Run test to verify it passes**
+- [x] **Step 5: Run test to verify it passes**
 
 Run: `npm test -- windowed`
 Expected: PASS — 7 tests
@@ -980,7 +980,7 @@ Expected: PASS — 7 tests
 Run: `npm test` (full suite, confirm nothing broke)
 Expected: PASS — all tests
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/engine/windowed.ts src/engine/windowed.test.ts src/engine/evaluator.ts
