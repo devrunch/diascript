@@ -32,7 +32,7 @@
 **Interfaces:**
 - Produces: `Token`, `TokenKind`, `tokenize(source: string): Token[]` — consumed by Task 2's parser.
 
-- [ ] **Step 1: Write the AST types**
+- [x] **Step 1: Write the AST types**
 
 ```typescript
 // src/ast.ts
@@ -66,7 +66,7 @@ export type Statement = InputDecl | FormulaDecl;
 export type Program = Statement[];
 ```
 
-- [ ] **Step 2: Write the failing tokenizer tests**
+- [x] **Step 2: Write the failing tokenizer tests**
 
 ```typescript
 // src/tokenizer.test.ts
@@ -122,12 +122,12 @@ describe("tokenize", () => {
 });
 ```
 
-- [ ] **Step 3: Run test to verify it fails**
+- [x] **Step 3: Run test to verify it fails**
 
 Run: `npm test -- tokenizer`
 Expected: FAIL — `Cannot find module './tokenizer'`
 
-- [ ] **Step 4: Write the tokenizer**
+- [x] **Step 4: Write the tokenizer**
 
 ```typescript
 // src/tokenizer.ts
@@ -217,12 +217,12 @@ export function tokenize(source: string): Token[] {
 }
 ```
 
-- [ ] **Step 5: Run test to verify it passes**
+- [x] **Step 5: Run test to verify it passes**
 
 Run: `npm test -- tokenizer`
 Expected: PASS — 8 tests
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/ast.ts src/tokenizer.ts src/tokenizer.test.ts
