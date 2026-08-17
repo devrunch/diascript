@@ -245,7 +245,7 @@ git commit -m "feat: AST types and tokenizer"
 
 **Function arities** (for arity validation — reject wrong argument count at parse time): `sma`/`ema`/`wma`/`stdev`/`highest`/`lowest`/`sum` = 2, `abs` = 1, `min`/`max` = 2, `ref` = 2, `prev` = 1, `held` = 2, `series` = 3, `true_range`/`typical_price` = 0, `rsi` = 2, `line`/`histogram` = 1, `band` = 2 (+ optional named `color`), `marker` = 3, `barcolor` = 3, `background` = 2 (+ optional named `color`... actually `background(condition, color)` is 2 positional, no named form), `fill` = 2 (+ optional named `color`, but per spec `fill(a, b, color)` — treat the third as a required positional `color`, matching `marker`/`barcolor`'s style, not a named optional — use exactly 3 positional args for `fill`).
 
-- [ ] **Step 1: Write the failing parser tests**
+- [x] **Step 1: Write the failing parser tests**
 
 ```typescript
 // src/parser.test.ts
@@ -345,12 +345,12 @@ describe("parse", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npm test -- parser`
 Expected: FAIL — `Cannot find module './parser'`
 
-- [ ] **Step 3: Write the parser**
+- [x] **Step 3: Write the parser**
 
 ```typescript
 // src/parser.ts
@@ -545,12 +545,12 @@ export function parse(source: string): Program {
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npm test -- parser`
 Expected: PASS — 14 tests
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/parser.ts src/parser.test.ts
