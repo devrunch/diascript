@@ -84,9 +84,30 @@ One formula per line, `name = expression`. A later line may reference an earlier
 - `true_range()` — `max(high - low, abs(high - ref(close, 1)), abs(low - ref(close, 1)))`
 - `typical_price()` — `(high + low + close) / 3`
 
+**Held state (bounded stateful pattern tracking):**
+- `held(condition, value)` — a memory cell that updates to `value` on any bar where `condition` is true, and otherwise carries forward whatever it held on the previous bar, indefinitely (not a fixed `n`-bar lookback like `prev`/`ref` — it can hold the same value for an unbounded number of bars until `condition` fires again). This is what "remember the last swing high until a new one forms" needs — `prev` only reaches back a fixed number of bars, but a swing high can persist for an arbitrary stretch:
+  ```
+  is_new_swing_high = high > highest(ref(high, 1), 5)
+  swing_high = held(is_new_swing_high, high)
+  ```
+  Still bounded and safe: exactly one scalar of state per `held(...)` call site, no unbounded recursion, no arbitrary function calls — the state transition rule itself (`condition` → `value`, else carry forward) is fixed and can't be redefined by the formula author into something more general.
+
+**Context (non-price):**
+- `time.dayofweek()`, `time.hour()`, `time.minute()` — derived purely from the current bar's own `time` field (no adapter call — these are pure math over a timestamp already in hand).
+- `session.is_open()` — whether the instrument's exchange session is open at this bar. Resolves through `DataAdapter.getSymbolMeta` (below) — an adapter that doesn't implement session knowledge simply has this always return `true`, degrading gracefully rather than erroring.
+- `symbol.exchange()` — the current instrument's exchange (e.g. `"NSE"`), also via `getSymbolMeta`.
+
+  `DataAdapter` gains one more (optional) method for these two:
+  ```ts
+  interface DataAdapter {
+    getSeries(symbol: string, timeframe: string): Promise<OHLCV[]>;
+    getSymbolMeta?(symbol: string): Promise<{ exchange: string; sessionOpen(time: number): boolean }>;
+  }
+  ```
+
 ### Non-goals (deliberately excluded, not a gap to fill later)
 
-- **No loops, no user-defined functions, no recursion beyond `prev`'s single-formula self-reference.** `prev` covers every real recursive indicator this project has evidence for needing (RSI, ATR, SuperTrend, Wilder's smoothing family); a general recursive-function-call mechanism would reopen the unbounded-computation risk the whole point of a restricted grammar is meant to close.
+- **No loops, no user-defined functions, no recursion beyond `prev`'s single-formula self-reference and `held`'s fixed carry-forward rule.** Both cover every real recursive/stateful indicator this project has evidence for needing (RSI, ATR, SuperTrend, Wilder's smoothing, swing-point tracking); a general recursive-function-call mechanism would reopen the unbounded-computation risk the whole point of a restricted grammar is meant to close.
 - **No order placement, no strategy/backtest execution.** An indicator formula computes a value series. Anything that acts on that value (placing a trade, sizing a position) is a different system's job — this project has no `strategy.*` equivalent and none is planned. (The host application already has a separate system for this — a validated condition DSL for signal rules, and a paper-trading engine — deliberately kept separate.)
 - **No arbitrary data structures.** No arrays/maps/matrices as a general facility — only the fixed OHLCV fields and named formula outputs. If a genuine need for a small fixed-size structure emerges (e.g. Ichimoku's five lines), it's modeled as multiple named formulas (as MACD is above), not a new data-structure primitive.
 
@@ -99,8 +120,13 @@ type IndicatorOutput =
   | { type: "line"; points: { time: number; value: number }[] }
   | { type: "band"; upper: { time: number; value: number }[]; lower: { time: number; value: number }[] }
   | { type: "marker"; points: { time: number; shape: string; color?: string }[] }
-  | { type: "histogram"; points: { time: number; value: number }[] };
+  | { type: "histogram"; points: { time: number; value: number }[] }
+  | { type: "barcolor"; points: { time: number; color: string }[] }
+  | { type: "background"; points: { time: number; color: string }[] }
+  | { type: "fill"; between: [string, string]; color: string };
 ```
+
+`barcolor(condition, colorIfTrue, colorIfFalse)` — recolors the actual candle/bar itself on bars where `condition` is true (Pine's `barcolor()`). `background(condition, color)` — shades the chart's background on bars where `condition` is true (Pine's `bgcolor()`). `fill(nameA, nameB, color)` — takes the names of two already-declared `line`/`band` outputs from the same definition and fills the region between them (Pine's `fill()`); this is why outputs are named — `fill` references them by name rather than re-deriving the two series itself.
 
 A top-level formula declares its own output shape explicitly, via one of four wrapper functions — no inference, no ambiguity about which of the four shapes a given formula produces:
 
@@ -117,6 +143,21 @@ macd_hist = histogram(macd_raw - signal_raw)
 ```
 
 `line(x)` wraps any numeric series. `band(upper, lower)` takes two numeric series. `marker(condition, shape, color)` takes a boolean series (only points where it's true get a marker) plus a fixed shape/color. `histogram(x)` wraps any numeric series. The MACD example shows the full pattern: bare intermediate formulas (`macd_raw`, `signal_raw`) hold working state, and three wrapped top-level formulas declare what actually renders — each independently, with its own shape.
+
+## Inputs (user-configurable parameters)
+
+An indicator definition declares its own configurable parameters up front — a host application's settings panel reads this declaration to render the right control (a number field, a source-series picker, a color swatch) automatically, the same way Pine's `input.*` calls generate TradingView's settings dialog:
+
+```
+input length = int(14, min=2, max=200)
+input source = source(close)
+input band_color = color("#2196F3")
+
+rsi_line = line(rsi(input.length, input.source))
+bb_bands = band(input.source + 2*stdev(input.source, 20), input.source - 2*stdev(input.source, 20), color=input.band_color)
+```
+
+Four input types, matching the four things an indicator commonly needs configured: `int(default, min, max)`, `float(default, min, max)`, `source(default)` (picks among `open`/`high`/`low`/`close`/`volume` or another named formula), `color(default)`. Every input has a required default and (for `int`/`float`) required bounds — this is the same "no unbounded value" discipline the condition DSL's `PARAM_BOUNDS` already established for signal-rule parameters, applied here to indicator parameters instead. Referenced inside the formula body as `input.<name>`.
 
 ## Package layout
 
@@ -143,6 +184,10 @@ Two failure classes, handled differently:
 - Golden-value tests: known indicators (RSI, EMA, MACD) computed in `diascript` against a fixed OHLCV fixture, compared to values from an established reference (e.g. `pandas_ta`'s output on the same fixture) within a small tolerance.
 - Grammar tests: every rejected-input case (unknown function, wrong arity, disallowed syntax) has a test asserting it's rejected at parse time, not evaluation time.
 - `prev`/recursive-indicator tests: confirm bar-order evaluation guarantee (bar N never computed before bar N-1 for a `prev`-using formula) and confirm a stateful indicator (e.g. Wilder's ATR) matches its known reference values over a real fixture.
+- `held()` tests: a value set once persists across many subsequent bars where the condition is false, and updates the instant the condition is true again — including a fixture long enough to prove it isn't secretly bounded to some fixed lookback.
+- Context primitive tests: `time.dayofweek/hour/minute` against known timestamps; `session.is_open`/`symbol.exchange` both against a real `getSymbolMeta` implementation and against an adapter that omits it (must degrade to `true`/empty rather than error).
+- Input tests: bounds enforcement (`int`/`float` reject a value outside `min`/`max` at parse/construction time, not silently clamp or ignore), and a `source` input correctly rebinding a formula to a different series when the host changes it.
+- New output-type tests: `barcolor`/`background`/`fill` each produce the documented shape from a small fixture formula, and the klinecharts adapter maps each to the correct API call.
 - Render adapter tests: given a fixed `IndicatorOutput`, assert the klinecharts adapter calls the expected `klinecharts` API with the expected shape (mocked, not a real chart instance).
 
 ## Out of scope for v1 (explicitly deferred, not abandoned)
