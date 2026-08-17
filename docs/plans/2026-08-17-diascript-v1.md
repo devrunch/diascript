@@ -851,8 +851,8 @@ describe("windowed functions", () => {
 
   it("ema weights recent values more heavily and matches a known reference value", () => {
     // 3-period EMA over [1,2,3,4,5], alpha = 2/(3+1) = 0.5
-    // seed = sma(first 3) = 2; then 2 -> 0.5*3+0.5*2=2.5 -> 0.5*4+0.5*2.5=3.25 -> 0.5*5+0.5*3.25=4.125
-    expect(ema(series, 3, 4)).toBeCloseTo(4.125);
+    // seed = sma(indices 0..2) = 2; then at k=3: 0.5*4 + 0.5*2 = 3; at k=4: 0.5*5 + 0.5*3 = 4
+    expect(ema(series, 3, 4)).toBeCloseTo(4);
   });
 
   it("wma weights linearly by recency", () => {
