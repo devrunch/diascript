@@ -93,8 +93,18 @@ function seriesUpTo(node: ASTNode, i: number, ctx: EvalContext): number[] {
   return out;
 }
 
-const TRUE_RANGE_EXPR = (parse("x = max(high - low, max(abs(high - ref(close, 1)), abs(low - ref(close, 1))))") as any)[0].expr;
 const TYPICAL_PRICE_EXPR = (parse("x = (high + low + close) / 3") as any)[0].expr;
+
+function trueRangeAt(i: number, ctx: EvalContext): number {
+  // Implemented directly rather than composed from ref(close, 1) — on bar 0
+  // there's no previous close, and routing through ref() there returns NaN,
+  // which poisons every max()/abs() built from it (JS's Math.max/NaN
+  // semantics), when the real convention is just high-low on the first bar.
+  const bar = ctx.bars[i];
+  if (i === 0) return bar.high - bar.low;
+  const prevClose = ctx.bars[i - 1].close;
+  return Math.max(bar.high - bar.low, Math.abs(bar.high - prevClose), Math.abs(bar.low - prevClose));
+}
 
 function rsiAt(n: number, i: number, ctx: EvalContext, sourceNode: ASTNode): number {
   // Two independent recursive accumulators — each needs its own running
@@ -149,7 +159,7 @@ function evaluateCall(node: Extract<ASTNode, { kind: "call" }>, i: number, ctx: 
       return i === 0 ? 0 : (ctx.self[i - 1] as number);
     }
 
-    case "true_range": return evaluateNodeAt(TRUE_RANGE_EXPR, i, ctx) as number;
+    case "true_range": return trueRangeAt(i, ctx);
     case "typical_price": return evaluateNodeAt(TYPICAL_PRICE_EXPR, i, ctx) as number;
     case "rsi": return rsiAt(arg(1), i, ctx, node.args[0]);
 
