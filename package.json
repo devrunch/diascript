@@ -6,6 +6,16 @@
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./klinecharts": {
+      "types": "./dist/adapters/render/klinecharts/adapter.d.ts",
+      "default": "./dist/adapters/render/klinecharts/adapter.js"
+    }
+  },
   "files": [
     "dist"
   ],
@@ -24,8 +34,18 @@
     "type": "git",
     "url": "https://github.com/devrunch/diascript.git"
   },
+  "peerDependencies": {
+    "klinecharts": "^10.0.0"
+  },
+  "peerDependenciesMeta": {
+    "klinecharts": {
+      "optional": true
+    }
+  },
   "devDependencies": {
     "@types/node": "^26.2.0",
+    "happy-dom": "^20.11.2",
+    "klinecharts": "^10.0.2",
     "typescript": "^5.6.0",
     "vitest": "^2.1.0"
   }
