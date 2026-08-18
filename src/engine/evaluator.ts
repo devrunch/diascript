@@ -88,9 +88,16 @@ function evaluateBinary(node: Extract<ASTNode, { kind: "binary" }>, i: number, c
 }
 
 function seriesUpTo(node: ASTNode, i: number, ctx: EvalContext): number[] {
-  const out: number[] = [];
-  for (let k = 0; k <= i; k++) out.push(evaluateNodeAt(node, k, ctx) as number);
-  return out;
+  // Computed ONCE for the whole bar range and cached by node identity, not
+  // recomputed from scratch on every call — windowed.ts's slice-based
+  // functions only ever read up to index i regardless of the array's total
+  // length, so handing back the full (or as-far-as-computed) series is safe
+  // and correct, just far cheaper across many bars.
+  if (!ctx._windowCache) ctx._windowCache = new Map();
+  let cached = ctx._windowCache.get(node);
+  if (!cached) { cached = []; ctx._windowCache.set(node, cached); }
+  while (cached.length <= i) cached.push(evaluateNodeAt(node, cached.length, ctx) as number);
+  return cached;
 }
 
 const TYPICAL_PRICE_EXPR = (parse("x = (high + low + close) / 3") as any)[0].expr;
@@ -106,22 +113,27 @@ function trueRangeAt(i: number, ctx: EvalContext): number {
   return Math.max(bar.high - bar.low, Math.abs(bar.high - prevClose), Math.abs(bar.low - prevClose));
 }
 
-function rsiAt(n: number, i: number, ctx: EvalContext, sourceNode: ASTNode): number {
-  // Two independent recursive accumulators — each needs its own running
-  // series, so this runs its own tiny bar-by-bar loop rather than reusing
-  // ctx.self (which belongs to the OUTER formula calling rsi(), not to rsi's
-  // own internal state).
-  const gains: number[] = [], losses: number[] = [], avgGain: number[] = [], avgLoss: number[] = [];
-  for (let k = 0; k <= i; k++) {
+function rsiAt(n: number, i: number, ctx: EvalContext, sourceNode: ASTNode, callNode: ASTNode): number {
+  // Two independent recursive accumulators, extended by exactly one bar per
+  // call rather than recomputed from bar 0 every time — the same fix as
+  // seriesUpTo's, for the same reason (this used to be O(bars) work times
+  // O(bars) calls = O(bars^2) for one rsi() call site). Cached per CALL
+  // node, not per sourceNode, since two rsi() calls sharing a source but
+  // using a different length `n` need independent state.
+  if (!ctx._rsiCache) ctx._rsiCache = new Map();
+  let state = ctx._rsiCache.get(callNode);
+  if (!state) { state = { avgGain: [], avgLoss: [] }; ctx._rsiCache.set(callNode, state); }
+  const { avgGain, avgLoss } = state;
+  while (avgGain.length <= i) {
+    const k = avgGain.length;
     const cur = evaluateNodeAt(sourceNode, k, ctx) as number;
     const prevVal = k === 0 ? cur : (evaluateNodeAt(sourceNode, k - 1, ctx) as number);
     const change = cur - prevVal;
-    gains.push(Math.max(change, 0));
-    losses.push(Math.max(-change, 0));
+    const gain = Math.max(change, 0), loss = Math.max(-change, 0);
     const prevAvgGain = k === 0 ? 0 : avgGain[k - 1];
     const prevAvgLoss = k === 0 ? 0 : avgLoss[k - 1];
-    avgGain.push(prevAvgGain * (n - 1) / n + gains[k] / n);
-    avgLoss.push(prevAvgLoss * (n - 1) / n + losses[k] / n);
+    avgGain.push(prevAvgGain * (n - 1) / n + gain / n);
+    avgLoss.push(prevAvgLoss * (n - 1) / n + loss / n);
   }
   const ag = avgGain[i], al = avgLoss[i];
   if (al === 0) return ag === 0 ? 50 : 100;
@@ -161,7 +173,7 @@ function evaluateCall(node: Extract<ASTNode, { kind: "call" }>, i: number, ctx: 
 
     case "true_range": return trueRangeAt(i, ctx);
     case "typical_price": return evaluateNodeAt(TYPICAL_PRICE_EXPR, i, ctx) as number;
-    case "rsi": return rsiAt(arg(1), i, ctx, node.args[0]);
+    case "rsi": return rsiAt(arg(1), i, ctx, node.args[0], node);
 
     case "series": {
       const symbolArg = node.args[0].kind === "namespaced" && node.args[0].namespace === "symbol" && node.args[0].member === "ticker"

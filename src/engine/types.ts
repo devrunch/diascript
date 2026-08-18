@@ -1,3 +1,5 @@
+import type { ASTNode } from "../ast";
+
 export interface OHLCV {
   time: number;
   open: number; high: number; low: number; close: number; volume: number;
@@ -49,4 +51,15 @@ export interface EvalContext {
    * aggregator (Task 12) can track first/lastBarIndex correctly; without it
    * there's no way to know which bar a deeply-nested call happened on. */
   pushDiagnostic: (message: string, barIndex: number) => void;
+  /** Memoizes a windowed function's inner-argument series by AST node
+   * identity — without this, every windowed call recomputed its whole inner
+   * series from scratch on every bar (O(bars) work times O(bars) calls =
+   * O(bars^2) per call site), which gets genuinely too slow past a few
+   * thousand bars. Lazily created; a fresh Map per formula (engine.ts builds
+   * a new EvalContext per formula), so no cross-formula staleness risk. */
+  _windowCache?: Map<ASTNode, number[]>;
+  /** Same purpose as _windowCache, for rsi()'s two internal recursive
+   * accumulators — kept on ctx rather than a module-level WeakMap so all
+   * per-evaluation memoization lives in one consistent place. */
+  _rsiCache?: Map<ASTNode, { avgGain: number[]; avgLoss: number[] }>;
 }
