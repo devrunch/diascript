@@ -70,4 +70,21 @@ describe("windowed functions", () => {
     expect(highestbars(series, 3, 0)).toBeNaN();
     expect(lowestbars(series, 3, 0)).toBeNaN();
   });
+
+  it("ema of an ema does not stay NaN forever (DEMA/TEMA/TRIX composability)", () => {
+    // A real, longer series so the inner ema(x,3) has a real 2-wide NaN
+    // prefix (indices 0-1) before the outer ema(ema1,3) gets enough real
+    // input to seed from -- this is exactly the shape that used to poison
+    // the whole outer series with NaN forever.
+    const long = Array.from({ length: 20 }, (_, k) => 10 + k);
+    const inner = long.map((_, k) => ema(long, 3, k));
+    expect(inner.slice(0, 2).every((v) => Number.isNaN(v))).toBe(true);
+    const outerLast = ema(inner, 3, 19);
+    expect(outerLast).not.toBeNaN();
+    // A smoothed EMA of a monotonically increasing linear series lags the
+    // input somewhat but stays within its overall range -- not exactly
+    // equal, just real and in a sane neighborhood (not NaN, not runaway).
+    expect(outerLast).toBeGreaterThan(20);
+    expect(outerLast).toBeLessThan(30);
+  });
 });

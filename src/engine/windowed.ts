@@ -12,8 +12,20 @@ export function sma(series: number[], n: number, i: number): number {
 export function ema(series: number[], n: number, i: number): number {
   if (i < n - 1) return NaN;
   const alpha = 2 / (n + 1);
-  let value = sma(series, n, n - 1);
-  for (let k = n; k <= i; k++) value = alpha * series[k] + (1 - alpha) * value;
+  // `series` may itself carry a leading NaN warm-up (e.g. nesting
+  // ema(ema(x, n), n) for DEMA/TEMA/TRIX feeds this the inner ema's own
+  // first n-1 NaN values) -- seeding unconditionally at index n-1 would
+  // poison the whole recursion forever, since every later step folds in
+  // the previous (NaN) value. Seed from the first window whose oldest
+  // element is real instead. A windowed series' NaN region is always a
+  // fixed leading prefix (never NaN again once valid), so checking just
+  // the window's oldest element is enough to confirm the whole window.
+  let seedAt = n - 1;
+  while (seedAt <= i && Number.isNaN(series[seedAt - n + 1])) seedAt++;
+  if (seedAt > i) return NaN;
+  let value = sma(series, n, seedAt);
+  if (Number.isNaN(value)) return NaN;
+  for (let k = seedAt + 1; k <= i; k++) value = alpha * series[k] + (1 - alpha) * value;
   return value;
 }
 
