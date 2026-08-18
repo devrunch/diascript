@@ -81,7 +81,7 @@ One formula per line, `name = expression`. A later line may reference an earlier
 - `series(symbol, timeframe, field)` — resolves through the `DataAdapter`, returns a series usable anywhere another series would be (so `sma(series("NIFTY 50", "1d", "close"), 20)` computes a daily-resolution SMA usable inside an indicator attached to a 5-minute chart).
 
 **Built-in derived series** (thin wrappers over the primitives above, provided because they're common enough to name):
-- `true_range()` — `max(high - low, abs(high - ref(close, 1)), abs(low - ref(close, 1)))`
+- `true_range()` — `max(high - low, abs(high - ref(close, 1)), abs(low - ref(close, 1)))`, except on the very first bar, where there is no previous close to compare against and the value is just `high - low` (the standard convention — found during implementation: routing the first-bar case through `ref(close, 1)`'s ordinary "insufficient history" `NaN` poisons the surrounding `max()`/`abs()` calls, since a `NaN` operand makes `max` return `NaN` regardless of the other arguments).
 - `typical_price()` — `(high + low + close) / 3`
 - `rsi(x, n)` — Wilder's RSI. Unlike the two above, this one is genuinely multi-step and recursive, not a one-liner — it's implemented internally as:
   ```
