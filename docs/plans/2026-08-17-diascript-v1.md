@@ -1307,7 +1307,7 @@ git commit -m "feat: true_range, typical_price, rsi — rsi proven expressible v
 - Consumes: `InputDecl` from Task 1
 - Produces: `resolveInputs(decls: InputDecl[], overrides?: Record<string, number | string>): Record<string, number | string>` — consumed by Task 12's orchestration.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```typescript
 // src/engine/inputs.test.ts
@@ -1343,12 +1343,12 @@ describe("resolveInputs", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npm test -- inputs`
 Expected: FAIL — `Cannot find module './inputs'`
 
-- [ ] **Step 3: Write `resolveInputs`**
+- [x] **Step 3: Write `resolveInputs`**
 
 ```typescript
 // src/engine/inputs.ts
@@ -1377,12 +1377,12 @@ export function resolveInputs(
 
 (Fix the `key in overrides` typo to `decl.name in overrides` while implementing — the loop variable is `decl`, not `key`.)
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npm test -- inputs`
 Expected: PASS — 5 tests
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/engine/inputs.ts src/engine/inputs.test.ts
@@ -1401,7 +1401,7 @@ git commit -m "feat: input resolution with bounds enforcement"
 - Consumes: `DataAdapter`, `OHLCV` from Task 3's `types.ts`
 - Produces: `InMemoryDataAdapter` — consumed by Task 10 and Task 14's end-to-end test.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```typescript
 // src/adapters/data/in-memory.test.ts
@@ -1432,12 +1432,12 @@ describe("InMemoryDataAdapter", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npm test -- in-memory`
 Expected: FAIL — `Cannot find module './in-memory'`
 
-- [ ] **Step 3: Write the adapter**
+- [x] **Step 3: Write the adapter**
 
 ```typescript
 // src/adapters/data/in-memory.ts
@@ -1473,12 +1473,12 @@ export class InMemoryDataAdapter implements DataAdapter {
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npm test -- in-memory`
 Expected: PASS — 3 tests
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/adapters/data/in-memory.ts src/adapters/data/in-memory.test.ts
@@ -1500,7 +1500,7 @@ git commit -m "feat: InMemoryDataAdapter — reference DataAdapter for tests and
 
 **`series(symbol, timeframe, field)` and `symbol.exchange()`/`session.is_open()` are NEVER evaluated by the synchronous per-bar evaluator directly** — they're resolved once here, upfront, and the results are placed into `ctx.externalSeries`/`ctx.sessionOpen`/`ctx.exchange` so the per-bar evaluator only ever does synchronous array lookups.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```typescript
 // src/engine/prefetch.test.ts
@@ -1550,12 +1550,12 @@ describe("prefetchExternalSeries", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npm test -- prefetch`
 Expected: FAIL — `Cannot find module './prefetch'`
 
-- [ ] **Step 3: Write `prefetchExternalSeries`**
+- [x] **Step 3: Write `prefetchExternalSeries`**
 
 ```typescript
 // src/engine/prefetch.ts
@@ -1619,7 +1619,7 @@ export async function prefetchExternalSeries(
 }
 ```
 
-- [ ] **Step 4: Wire `series()` and `symbol.exchange()`/`symbol.ticker()` into the evaluator**
+- [x] **Step 4: Wire `series()` and `symbol.exchange()`/`symbol.ticker()` into the evaluator**
 
 In `src/engine/evaluator.ts`'s `evaluateCall`, add:
 
@@ -1639,7 +1639,7 @@ In `src/engine/evaluator.ts`'s `evaluateCall`, add:
 
 And in `evaluateNamespaced`, replace the `symbol.exchange`/`symbol.ticker` throws (these are only meaningful as string-typed ARGUMENTS to `series()`, handled above — evaluating them as a plain series value directly is a genuine misuse, so the throw stays for that case) — no change needed there, the `series` case above already special-cases reading `symbol.ticker()` out of the AST without calling `evaluateNodeAt` on it.
 
-- [ ] **Step 5: Run test to verify it passes**
+- [x] **Step 5: Run test to verify it passes**
 
 Run: `npm test -- prefetch`
 Expected: PASS — 3 tests
@@ -1647,7 +1647,7 @@ Expected: PASS — 3 tests
 Run: `npm test` (full suite)
 Expected: PASS
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/engine/prefetch.ts src/engine/prefetch.test.ts src/engine/evaluator.ts
