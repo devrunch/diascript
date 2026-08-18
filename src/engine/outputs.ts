@@ -71,8 +71,11 @@ export function buildOutput(name: string, expr: ASTNode, bars: OHLCV[], ctx?: Ev
 
 function evalArgSeries(node: ASTNode, bars: OHLCV[], ctx: EvalContext): (number | boolean)[] {
   const result: (number | boolean)[] = [];
-  const localCtx = { ...ctx, self: result };
-  for (let i = 0; i < bars.length; i++) result.push(evaluateNodeAt(node, i, localCtx));
+  // Mutate ctx.self directly (not a spread copy) — the caller (engine.ts)
+  // reads ctx.self afterward to populate `values` for wrapped formulas, so
+  // a disconnected copy here would silently leave that permanently empty.
+  ctx.self = result;
+  for (let i = 0; i < bars.length; i++) result.push(evaluateNodeAt(node, i, ctx));
   return result;
 }
 
