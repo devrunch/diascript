@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { realpathSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 import { parse, ParseError } from "../index.js";
 import { isOutputWrapper } from "../engine/outputs.js";
@@ -45,6 +46,14 @@ async function main(): Promise<void> {
 }
 
 // Only run the CLI body when executed directly, not when imported by tests.
-if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) {
+function isDirectlyExecuted(): boolean {
+  try {
+    return import.meta.url === pathToFileURL(realpathSync(process.argv[1] ?? "")).href;
+  } catch {
+    return false;
+  }
+}
+
+if (isDirectlyExecuted()) {
   await main();
 }
