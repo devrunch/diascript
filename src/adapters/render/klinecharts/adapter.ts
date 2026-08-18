@@ -1,8 +1,8 @@
 import { registerIndicator, type Chart, type IndicatorTemplate, type KLineData } from "klinecharts";
-import { parse } from "../../../parser";
-import { evaluate } from "../../../engine/engine";
-import { isOutputWrapper } from "../../../engine/outputs";
-import { DataAdapter, IndicatorOutput } from "../../../engine/types";
+import { parse } from "../../../parser.js";
+import { evaluate } from "../../../engine/engine.js";
+import { isOutputWrapper } from "../../../engine/outputs.js";
+import { DataAdapter, IndicatorOutput } from "../../../engine/types.js";
 
 /** klinecharts calls `calc` every time ITS OWN data changes (new bar, live
  * tick, panning to load more history) — passing the current `dataList` fresh

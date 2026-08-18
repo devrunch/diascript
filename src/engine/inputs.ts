@@ -1,4 +1,4 @@
-import { InputDecl } from "../ast";
+import { InputDecl } from "../ast.js";
 
 export function resolveInputs(
   decls: InputDecl[],

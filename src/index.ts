@@ -1,6 +1,6 @@
-export { parse, ParseError } from "./parser";
-export { evaluate } from "./engine/engine";
-export { InMemoryDataAdapter } from "./adapters/data/in-memory";
+export { parse, ParseError } from "./parser.js";
+export { evaluate } from "./engine/engine.js";
+export { InMemoryDataAdapter } from "./adapters/data/in-memory.js";
 export type { OHLCV, DataAdapter, IndicatorOutput, EvaluationResult, Diagnostic } from "./engine/types";
 
 // registerDiascriptIndicator/attachDiascriptIndicator are NOT re-exported here

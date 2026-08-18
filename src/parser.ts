@@ -1,5 +1,5 @@
-import { tokenize, Token, TokenKind } from "./tokenizer";
-import { ASTNode, Program, Statement, InputType } from "./ast";
+import { tokenize, Token, TokenKind } from "./tokenizer.js";
+import { ASTNode, Program, Statement, InputType } from "./ast.js";
 
 export class ParseError extends Error {
   constructor(message: string, public line: number, public col: number) {

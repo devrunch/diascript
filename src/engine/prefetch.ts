@@ -1,5 +1,5 @@
-import { ASTNode, Program } from "../ast";
-import { DataAdapter, OHLCV } from "./types";
+import { ASTNode, Program } from "../ast.js";
+import { DataAdapter, OHLCV } from "./types.js";
 
 interface SeriesCall { symbol: string; timeframe: string; field: string }
 

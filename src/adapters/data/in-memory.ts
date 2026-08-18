@@ -1,4 +1,4 @@
-import { DataAdapter, OHLCV } from "../../engine/types";
+import { DataAdapter, OHLCV } from "../../engine/types.js";
 
 /** A reference DataAdapter for tests and examples — not meant for production
  * use, just proves the interface and gives every other task something real

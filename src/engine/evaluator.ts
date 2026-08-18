@@ -1,7 +1,7 @@
-import { ASTNode } from "../ast";
-import { EvalContext } from "./types";
-import { sma, ema, wma, stdev, highest, lowest, sum } from "./windowed";
-import { parse } from "../parser";
+import { ASTNode } from "../ast.js";
+import { EvalContext } from "./types.js";
+import { sma, ema, wma, stdev, highest, lowest, sum } from "./windowed.js";
+import { parse } from "../parser.js";
 
 export function evaluateFormulaSeries(expr: ASTNode, ctx: EvalContext): (number | boolean)[] {
   const result: (number | boolean)[] = [];

@@ -1,4 +1,4 @@
-import type { ASTNode } from "../ast";
+import type { ASTNode } from "../ast.js";
 
 export interface OHLCV {
   time: number;

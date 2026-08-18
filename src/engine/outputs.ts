@@ -1,6 +1,6 @@
-import { ASTNode } from "../ast";
-import { evaluateNodeAt } from "./evaluator";
-import { EvalContext, IndicatorOutput, OHLCV } from "./types";
+import { ASTNode } from "../ast.js";
+import { evaluateNodeAt } from "./evaluator.js";
+import { EvalContext, IndicatorOutput, OHLCV } from "./types.js";
 
 const OUTPUT_WRAPPERS = new Set(["line", "band", "marker", "histogram", "barcolor", "background", "fill"]);
 

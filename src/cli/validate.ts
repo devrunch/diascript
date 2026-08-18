@@ -1,5 +1,6 @@
-import { parse, ParseError } from "../index";
-import { isOutputWrapper } from "../engine/outputs";
+import { pathToFileURL } from "node:url";
+import { parse, ParseError } from "../index.js";
+import { isOutputWrapper } from "../engine/outputs.js";
 
 export type ValidateResult =
   | { valid: true; outputType: string }
@@ -23,7 +24,7 @@ export function runValidate(source: string, outputName: string): ValidateResult 
       error: { message: `'${outputName}' is not a rendered (wrapped) formula in this diascript source` },
     };
   }
-  return { valid: true, outputType: (stmt.expr as { name: string }).name };
+  return { valid: true, outputType: stmt.expr.name };
 }
 
 async function main(): Promise<void> {
@@ -43,6 +44,6 @@ async function main(): Promise<void> {
 }
 
 // Only run the CLI body when executed directly, not when imported by tests.
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) {
   main();
 }

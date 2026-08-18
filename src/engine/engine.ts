@@ -1,10 +1,10 @@
-import { parse } from "../parser";
-import { InputDecl } from "../ast";
-import { evaluateFormulaSeries } from "./evaluator";
-import { resolveInputs } from "./inputs";
-import { prefetchExternalSeries } from "./prefetch";
-import { buildOutput, isOutputWrapper } from "./outputs";
-import { DataAdapter, Diagnostic, EvalContext, EvaluationResult, OHLCV } from "./types";
+import { parse } from "../parser.js";
+import { InputDecl } from "../ast.js";
+import { evaluateFormulaSeries } from "./evaluator.js";
+import { resolveInputs } from "./inputs.js";
+import { prefetchExternalSeries } from "./prefetch.js";
+import { buildOutput, isOutputWrapper } from "./outputs.js";
+import { DataAdapter, Diagnostic, EvalContext, EvaluationResult, OHLCV } from "./types.js";
 
 export async function evaluate(
   source: string,
