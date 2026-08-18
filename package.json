@@ -1,6 +1,6 @@
 {
   "name": "diascript",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "A small, safe, chart-library-agnostic DSL for defining technical indicators as data, not code.",
   "license": "MIT",
   "type": "module",
