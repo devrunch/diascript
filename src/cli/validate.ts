@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import { pathToFileURL } from "node:url";
 import { parse, ParseError } from "../index.js";
 import { isOutputWrapper } from "../engine/outputs.js";
@@ -45,5 +46,5 @@ async function main(): Promise<void> {
 
 // Only run the CLI body when executed directly, not when imported by tests.
 if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) {
-  main();
+  await main();
 }
