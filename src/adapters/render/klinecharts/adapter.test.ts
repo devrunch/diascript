@@ -4,65 +4,97 @@
 // library, real constraint. Scoped to this one file so every other test
 // keeps the faster default Node environment.
 import { describe, it, expect, vi } from "vitest";
-import { renderToKlinecharts } from "./adapter";
+import { registerDiascriptIndicator, attachDiascriptIndicator, buildCalc } from "./adapter";
+import { InMemoryDataAdapter } from "../../data/in-memory";
 import type { Chart } from "klinecharts";
-import type { IndicatorOutput } from "../../../engine/types";
 
-/** createIndicator needs a live Chart instance (real klinecharts init()
- * needs a DOM/canvas, unavailable in this Node test env) — mocked here.
- * registerIndicator itself is the REAL klinecharts function, genuinely
- * exercised: these tests fail if the template shape this adapter builds
- * doesn't match what klinecharts actually accepts, not just what a
- * hand-written mock was told to accept. */
+/** attachDiascriptIndicator needs a live Chart instance (real klinecharts
+ * init() needs a DOM/canvas, unavailable in this Node test env) — mocked
+ * here. registerDiascriptIndicator itself calls the REAL klinecharts
+ * registerIndicator function, genuinely exercised: these tests fail if the
+ * template this adapter builds doesn't match what klinecharts actually
+ * accepts, not just what a hand-written mock was told to accept. */
 function fakeChart(): Chart {
   return { createIndicator: vi.fn() } as unknown as Chart;
 }
 
-describe("renderToKlinecharts", () => {
-  it("registers a real klinecharts line-type indicator and attaches it to the chart", () => {
-    const chart = fakeChart();
-    const output: IndicatorOutput = { type: "line", points: [{ time: 0, value: 1 }] };
-
-    expect(() => renderToKlinecharts(chart, "myline", output)).not.toThrow();
-
-    expect(chart.createIndicator).toHaveBeenCalledWith("myline");
+describe("registerDiascriptIndicator / attachDiascriptIndicator", () => {
+  it("registers a real klinecharts indicator backed by a line-wrapped diascript formula", () => {
+    expect(() => registerDiascriptIndicator("myline", {
+      source: "x = line(close)",
+      outputName: "x",
+      adapter: new InMemoryDataAdapter(),
+      symbolTicker: "T",
+    })).not.toThrow();
   });
 
-  it("registers a real band indicator with two figures", () => {
-    const chart = fakeChart();
-    const output: IndicatorOutput = {
-      type: "band",
-      upper: [{ time: 0, value: 2 }],
-      lower: [{ time: 0, value: 1 }],
-    };
-
-    expect(() => renderToKlinecharts(chart, "myband", output)).not.toThrow();
+  it("registers a band-wrapped formula with two figures", () => {
+    expect(() => registerDiascriptIndicator("myband", {
+      source: "x = band(close + 1, close - 1)",
+      outputName: "x",
+      adapter: new InMemoryDataAdapter(),
+      symbolTicker: "T",
+    })).not.toThrow();
   });
 
-  it("registers a real marker indicator", () => {
-    const chart = fakeChart();
-    const output: IndicatorOutput = { type: "marker", points: [{ time: 0, shape: "triangle-up", color: "green" }] };
-
-    expect(() => renderToKlinecharts(chart, "mymarker", output)).not.toThrow();
+  it("registers a marker-wrapped formula", () => {
+    expect(() => registerDiascriptIndicator("mymarker", {
+      source: 'x = marker(close > 1, "triangle-up", "green")',
+      outputName: "x",
+      adapter: new InMemoryDataAdapter(),
+      symbolTicker: "T",
+    })).not.toThrow();
   });
 
-  it("registers a real histogram indicator", () => {
-    const chart = fakeChart();
-    const output: IndicatorOutput = { type: "histogram", points: [{ time: 0, value: 3 }] };
-
-    expect(() => renderToKlinecharts(chart, "myhist", output)).not.toThrow();
+  it("throws immediately (synchronously, before any calc runs) for an unknown output name", () => {
+    expect(() => registerDiascriptIndicator("bad", {
+      source: "x = line(close)",
+      outputName: "does_not_exist",
+      adapter: new InMemoryDataAdapter(),
+      symbolTicker: "T",
+    })).toThrow(/not a rendered/);
   });
 
-  it("registers a real background indicator", () => {
-    const chart = fakeChart();
-    const output: IndicatorOutput = { type: "background", points: [{ time: 0, color: "#eee" }] };
-
-    expect(() => renderToKlinecharts(chart, "mybg", output)).not.toThrow();
+  it("throws for an output type klinecharts has no confirmed built-in figure for", () => {
+    expect(() => registerDiascriptIndicator("bad2", {
+      source: 'x = barcolor(close > 1, "green", "red")',
+      outputName: "x",
+      adapter: new InMemoryDataAdapter(),
+      symbolTicker: "T",
+    })).toThrow(/not yet supported/);
   });
 
-  it("throws for an output type klinecharts has no confirmed built-in figure for, rather than silently dropping it", () => {
+  it("attaches a registered indicator to a chart instance", () => {
+    registerDiascriptIndicator("attachtest", {
+      source: "x = line(close)",
+      outputName: "x",
+      adapter: new InMemoryDataAdapter(),
+      symbolTicker: "T",
+    });
     const chart = fakeChart();
-    const output: IndicatorOutput = { type: "barcolor", points: [{ time: 0, color: "red" }] };
-    expect(() => renderToKlinecharts(chart, "x", output)).toThrow(/not yet supported/);
+
+    attachDiascriptIndicator(chart, "attachtest");
+
+    expect(chart.createIndicator).toHaveBeenCalledWith("attachtest");
+  });
+
+  it("calc actually recomputes from the dataList it's given, not a frozen snapshot — the real bug the old adapter had", async () => {
+    const calc = buildCalc({
+      source: "x = line(close)",
+      outputName: "x",
+      adapter: new InMemoryDataAdapter(),
+      symbolTicker: "T",
+    });
+
+    const short = await calc([{ timestamp: 0, open: 1, high: 1, low: 1, close: 1 }]);
+    const longer = await calc([
+      { timestamp: 0, open: 1, high: 1, low: 1, close: 1 },
+      { timestamp: 60_000, open: 2, high: 2, low: 2, close: 2 },
+      { timestamp: 120_000, open: 3, high: 3, low: 3, close: 3 },
+    ]);
+
+    expect(short).toHaveLength(1);
+    expect(longer).toHaveLength(3);
+    expect((longer[2] as any).value).toBe(3);
   });
 });
