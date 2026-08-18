@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { sma, ema, wma, stdev, highest, lowest, sum } from "./windowed";
+import { sma, ema, wma, stdev, highest, lowest, sum, highestbars, lowestbars } from "./windowed";
 
 describe("windowed functions", () => {
   const series = [1, 2, 3, 4, 5];
@@ -39,5 +39,35 @@ describe("windowed functions", () => {
   it("all windowed functions return NaN before enough history exists", () => {
     expect(sma(series, 3, 0)).toBeNaN();
     expect(highest(series, 3, 0)).toBeNaN();
+  });
+
+  it("highestbars returns 0 when the most recent bar in the window is the highest", () => {
+    // window [3,4,5] at index 4, n=3 — index 4 (value 5) is highest, 0 bars back
+    expect(highestbars(series, 3, 4)).toBe(0);
+  });
+
+  it("highestbars returns the offset of an earlier bar when it's the highest", () => {
+    const s = [1, 10, 2, 3, 4];
+    // window at index 4, n=5: [1,10,2,3,4] — value 10 is at index 1, which is
+    // 3 bars back from index 4 (4-1=3)
+    expect(highestbars(s, 5, 4)).toBe(3);
+  });
+
+  it("lowestbars returns the offset of the lowest bar in the window", () => {
+    const s = [5, 1, 4, 3, 2];
+    // window at index 4, n=5: [5,1,4,3,2] — value 1 is at index 1, 3 bars back
+    expect(lowestbars(s, 5, 4)).toBe(3);
+  });
+
+  it("highestbars favors the most recent bar on a tie", () => {
+    const s = [1, 5, 2, 5, 3];
+    // window at index 4, n=5: [1,5,2,5,3] — value 5 ties at index 1 and 3;
+    // index 3 is more recent (1 bar back) than index 1 (3 bars back)
+    expect(highestbars(s, 5, 4)).toBe(1);
+  });
+
+  it("highestbars/lowestbars return NaN before enough history exists", () => {
+    expect(highestbars(series, 3, 0)).toBeNaN();
+    expect(lowestbars(series, 3, 0)).toBeNaN();
   });
 });

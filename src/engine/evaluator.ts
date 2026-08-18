@@ -1,6 +1,6 @@
 import { ASTNode } from "../ast.js";
 import { EvalContext } from "./types.js";
-import { sma, ema, wma, stdev, highest, lowest, sum } from "./windowed.js";
+import { sma, ema, wma, stdev, highest, lowest, sum, highestbars, lowestbars } from "./windowed.js";
 import { parse } from "../parser.js";
 
 export function evaluateFormulaSeries(expr: ASTNode, ctx: EvalContext): (number | boolean)[] {
@@ -146,9 +146,12 @@ function evaluateCall(node: Extract<ASTNode, { kind: "call" }>, i: number, ctx: 
     case "abs": return Math.abs(arg(0));
     case "min": return Math.min(arg(0), arg(1));
     case "max": return Math.max(arg(0), arg(1));
+    case "log": return Math.log(arg(0));
+    case "sqrt": return Math.sqrt(arg(0));
 
-    case "sma": case "ema": case "wma": case "stdev": case "highest": case "lowest": case "sum": {
-      const windowFns = { sma, ema, wma, stdev, highest, lowest, sum };
+    case "sma": case "ema": case "wma": case "stdev": case "highest": case "lowest": case "sum":
+    case "highestbars": case "lowestbars": {
+      const windowFns = { sma, ema, wma, stdev, highest, lowest, sum, highestbars, lowestbars };
       const result = windowFns[node.name](seriesUpTo(node.args[0], i, ctx), arg(1), i);
       if (Number.isNaN(result)) ctx.pushDiagnostic(`${node.name}(): insufficient history`, i);
       return result;

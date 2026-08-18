@@ -38,6 +38,18 @@ describe("evaluateFormulaSeries — point-wise math and comparisons", () => {
     expect(evaluateFormulaSeries((parse("x = max(close, 2)") as any)[0].expr, ctx())).toEqual([2, 2, 3]);
   });
 
+  it("evaluates log/sqrt point-wise", () => {
+    const logResult = evaluateFormulaSeries((parse("x = log(close)") as any)[0].expr, ctx());
+    expect(logResult[0]).toBeCloseTo(Math.log(1));
+    expect(logResult[1]).toBeCloseTo(Math.log(2));
+    expect(logResult[2]).toBeCloseTo(Math.log(3));
+
+    const sqrtResult = evaluateFormulaSeries((parse("x = sqrt(close)") as any)[0].expr, ctx());
+    expect(sqrtResult[0]).toBeCloseTo(Math.sqrt(1));
+    expect(sqrtResult[1]).toBeCloseTo(Math.sqrt(2));
+    expect(sqrtResult[2]).toBeCloseTo(Math.sqrt(3));
+  });
+
   it("evaluates comparisons to booleans", () => {
     expect(evaluateFormulaSeries((parse("x = close > 1") as any)[0].expr, ctx())).toEqual([false, true, true]);
   });

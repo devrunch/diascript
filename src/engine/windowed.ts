@@ -46,3 +46,23 @@ export function sum(series: number[], n: number, i: number): number {
   const w = windowSlice(series, n, i);
   return w ? w.reduce((a, b) => a + b, 0) : NaN;
 }
+
+export function highestbars(series: number[], n: number, i: number): number {
+  const w = windowSlice(series, n, i);
+  if (!w) return NaN;
+  let bestOffset = 0, bestValue = w[n - 1];
+  for (let k = n - 2; k >= 0; k--) {
+    if (w[k] > bestValue) { bestValue = w[k]; bestOffset = n - 1 - k; }
+  }
+  return bestOffset;
+}
+
+export function lowestbars(series: number[], n: number, i: number): number {
+  const w = windowSlice(series, n, i);
+  if (!w) return NaN;
+  let bestOffset = 0, bestValue = w[n - 1];
+  for (let k = n - 2; k >= 0; k--) {
+    if (w[k] < bestValue) { bestValue = w[k]; bestOffset = n - 1 - k; }
+  }
+  return bestOffset;
+}
