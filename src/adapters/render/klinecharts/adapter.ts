@@ -50,11 +50,23 @@ function buildTemplate(name: string, output: IndicatorOutput): IndicatorTemplate
         calc: () => output.points.map(p => ({ time: p.time, color: p.color })),
       };
     case "barcolor":
+      // Confirmed via the real klinecharts types: candle coloring is a
+      // global up/down compare-rule (CandleBarColor: compareRule/upColor/
+      // downColor), set once via chart.setStyles — there's no per-bar,
+      // arbitrary-condition recolor hook the way an indicator figure has.
+      // Not a research gap — genuinely no matching primitive exists.
+      throw new Error(`Output type '${output.type}' is not yet supported by the klinecharts adapter`);
     case "fill":
-      // klinecharts has no confirmed built-in figure type for recoloring
-      // the candle itself or filling between two series — real gap, not
-      // yet closed, rather than a guessed figure `type` string shipped
-      // without verifying it actually renders anything.
+      // `type: "polygon"` figures and a custom draw callback (real API:
+      // IndicatorDrawCallback gets ctx/xAxis/yAxis with real
+      // convertToPixel(value) methods) COULD draw this. The real blocker:
+      // fill's output only carries `between: [name, name]` — the actual
+      // point data for those two other outputs isn't available here, since
+      // this function renders one output at a time. Drawing it needs
+      // either a second `allOutputs` parameter or a different entry point
+      // that sees every output for a script at once — a signature change,
+      // not a missing figure type. Left unsupported rather than shipping
+      // an unverified custom-canvas drawing on top of an incomplete signature.
       throw new Error(`Output type '${output.type}' is not yet supported by the klinecharts adapter`);
   }
 }
