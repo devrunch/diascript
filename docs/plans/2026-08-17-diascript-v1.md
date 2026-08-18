@@ -1826,8 +1826,11 @@ export function buildOutput(name: string, expr: ASTNode, bars: OHLCV[], ctx?: Ev
 
 function evalArgSeries(node: ASTNode, bars: OHLCV[], ctx: EvalContext): (number | boolean)[] {
   const result: (number | boolean)[] = [];
-  const localCtx = { ...ctx, self: result };
-  for (let i = 0; i < bars.length; i++) result.push(evaluateNodeAt(node, i, localCtx));
+  // Mutate ctx.self directly (not a spread copy) — the caller (engine.ts)
+  // reads ctx.self afterward to populate `values` for wrapped formulas, so
+  // a disconnected copy here would silently leave that permanently empty.
+  ctx.self = result;
+  for (let i = 0; i < bars.length; i++) result.push(evaluateNodeAt(node, i, ctx));
   return result;
 }
 
@@ -1951,7 +1954,7 @@ export async function evaluate(
   const { externalSeries, sessionOpen, exchange } = await prefetchExternalSeries(program, bars, adapter, symbolTicker);
 
   const values: Record<string, (number | boolean)[]> = {};
-  const outputs: Record<string, ReturnType<typeof buildOutput> & object> = {} as any;
+  const outputs: EvaluationResult["outputs"] = {};
   const diagCounts = new Map<string, Diagnostic>();
 
   const completed = new Map<string, (number | boolean)[]>();
@@ -1968,13 +1971,20 @@ export async function evaluate(
         else diagCounts.set(key, { formula: stmt.name, message, severity: "warning", count: 1, firstBarIndex: barIndex, lastBarIndex: barIndex });
       },
     };
-    const series = evaluateFormulaSeries(stmt.expr, ctx);
-    values[stmt.name] = series;
-    completed.set(stmt.name, series);
 
     if (isOutputWrapper(stmt.expr)) {
+      // Output wrappers are evaluated ONCE via buildOutput, which computes
+      // and populates `values` for the wrapped argument too — evaluating
+      // the same expression tree a second time via evaluateFormulaSeries
+      // would double-count diagnostics (and double the work) for no reason.
       const output = buildOutput(stmt.name, stmt.expr, bars, ctx);
       if (output) outputs[stmt.name] = output;
+      values[stmt.name] = ctx.self;
+      completed.set(stmt.name, ctx.self);
+    } else {
+      const series = evaluateFormulaSeries(stmt.expr, ctx);
+      values[stmt.name] = series;
+      completed.set(stmt.name, series);
     }
   }
 
