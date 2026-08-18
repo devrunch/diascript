@@ -2021,7 +2021,7 @@ git commit -m "feat: evaluate() — full orchestration, values/outputs/diagnosti
 
 Since this project has no runtime dependency on `klinecharts` itself (v1 doesn't want a hard dependency for a library other projects will embed alongside their OWN klinecharts install), define a minimal structural interface matching the real klinecharts `registerIndicator`/figure API, and test against a mock implementing that interface — not a real `klinecharts` instance.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```typescript
 // src/adapters/render/klinecharts/adapter.test.ts
@@ -2075,12 +2075,12 @@ describe("renderToKlinecharts", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npm test -- klinecharts`
 Expected: FAIL — `Cannot find module './adapter'`
 
-- [ ] **Step 3: Write the adapter**
+- [x] **Step 3: Write the adapter**
 
 ```typescript
 // src/adapters/render/klinecharts/adapter.ts
@@ -2139,12 +2139,12 @@ export function renderToKlinecharts(chart: KLineChartLike, name: string, output:
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npm test -- klinecharts`
 Expected: PASS — 4 tests
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/adapters/render/klinecharts/adapter.ts src/adapters/render/klinecharts/adapter.test.ts
@@ -2162,7 +2162,7 @@ git commit -m "feat: klinecharts render adapter — line/band/histogram/marker/b
 **Interfaces:**
 - Consumes: `evaluate` (Task 12), `spec/examples/trend-regime.dia` (already committed to the repo)
 
-- [ ] **Step 1: Write the failing end-to-end test**
+- [x] **Step 1: Write the failing end-to-end test**
 
 ```typescript
 // src/e2e.test.ts
@@ -2207,12 +2207,12 @@ describe("end-to-end: trend-regime.dia", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npm test -- e2e`
 Expected: FAIL — likely a parse or reference error the first time this real example is actually run end-to-end; fix whatever surfaces (this is the first time `trend-regime.dia` has ever actually been parsed/evaluated by real code — expect at least one real bug here, e.g. a missed primitive wiring or an arity mismatch).
 
-- [ ] **Step 3: Write the public exports**
+- [x] **Step 3: Write the public exports**
 
 ```typescript
 // src/index.ts
@@ -2223,7 +2223,7 @@ export { renderToKlinecharts } from "./adapters/render/klinecharts/adapter";
 export type { OHLCV, DataAdapter, IndicatorOutput, EvaluationResult, Diagnostic } from "./engine/types";
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npm test -- e2e`
 Expected: PASS. If Step 2 surfaced a real bug, this step is "fix the bug, then confirm pass" — document what was actually wrong in the commit message (this is exactly the kind of thing unit tests in isolation can't catch, and the reason this task exists).
@@ -2234,7 +2234,7 @@ Expected: PASS — all tests across all 14 tasks
 Run: `npm run build`
 Expected: clean TypeScript compile, no errors
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/e2e.test.ts src/index.ts
