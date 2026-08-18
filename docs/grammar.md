@@ -21,9 +21,9 @@ Nothing outside this list may be used as a formula or input name — every one o
 
 **Series references:** `open`, `high`, `low`, `close`, `volume`
 
-**Windowed functions:** `sma`, `ema`, `wma`, `stdev`, `highest`, `lowest`, `sum`
+**Windowed functions:** `sma`, `ema`, `wma`, `stdev`, `highest`, `lowest`, `sum`, `highestbars`, `lowestbars`
 
-**Point-wise math:** `abs`, `min`, `max`
+**Point-wise math:** `abs`, `min`, `max`, `log`, `sqrt`, `exp`
 
 **Time/state:** `ref`, `prev`, `held`
 

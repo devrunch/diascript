@@ -148,6 +148,7 @@ function evaluateCall(node: Extract<ASTNode, { kind: "call" }>, i: number, ctx: 
     case "max": return Math.max(arg(0), arg(1));
     case "log": return Math.log(arg(0));
     case "sqrt": return Math.sqrt(arg(0));
+    case "exp": return Math.exp(arg(0));
 
     case "sma": case "ema": case "wma": case "stdev": case "highest": case "lowest": case "sum":
     case "highestbars": case "lowestbars": {

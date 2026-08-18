@@ -50,6 +50,13 @@ describe("evaluateFormulaSeries — point-wise math and comparisons", () => {
     expect(sqrtResult[2]).toBeCloseTo(Math.sqrt(3));
   });
 
+  it("evaluates exp point-wise", () => {
+    const expResult = evaluateFormulaSeries((parse("x = exp(close)") as any)[0].expr, ctx());
+    expect(expResult[0]).toBeCloseTo(Math.exp(1));
+    expect(expResult[1]).toBeCloseTo(Math.exp(2));
+    expect(expResult[2]).toBeCloseTo(Math.exp(3));
+  });
+
   it("evaluates comparisons to booleans", () => {
     expect(evaluateFormulaSeries((parse("x = close > 1") as any)[0].expr, ctx())).toEqual([false, true, true]);
   });

@@ -59,13 +59,15 @@ describe("parse", () => {
     expect(() => parse("x = sma(close)")).toThrow(ParseError);
   });
 
-  it("accepts highestbars/lowestbars/log/sqrt with correct arity and rejects wrong arity", () => {
+  it("accepts highestbars/lowestbars/log/sqrt/exp with correct arity and rejects wrong arity", () => {
     expect(() => parse("x = highestbars(high, 14)")).not.toThrow();
     expect(() => parse("x = lowestbars(low, 14)")).not.toThrow();
     expect(() => parse("x = log(close)")).not.toThrow();
     expect(() => parse("x = sqrt(close)")).not.toThrow();
+    expect(() => parse("x = exp(close)")).not.toThrow();
     expect(() => parse("x = highestbars(high)")).toThrow(ParseError);
     expect(() => parse("x = log(close, 2)")).toThrow(ParseError);
+    expect(() => parse("x = exp(close, 2)")).toThrow(ParseError);
   });
 
   it("parses and/or/not with correct precedence (and binds tighter than or)", () => {

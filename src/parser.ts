@@ -12,7 +12,7 @@ const RESERVED = new Set([
   "open", "high", "low", "close", "volume",
   "sma", "ema", "wma", "stdev", "highest", "lowest", "sum",
   "highestbars", "lowestbars",
-  "abs", "min", "max", "log", "sqrt", "ref", "prev", "held", "series",
+  "abs", "min", "max", "log", "sqrt", "exp", "ref", "prev", "held", "series",
   "true_range", "typical_price", "rsi",
   "line", "band", "marker", "histogram", "barcolor", "background", "fill",
   "time", "session", "symbol", "int", "float", "source", "color",
@@ -21,7 +21,7 @@ const RESERVED = new Set([
 const ARITY: Record<string, number> = {
   sma: 2, ema: 2, wma: 2, stdev: 2, highest: 2, lowest: 2, sum: 2,
   highestbars: 2, lowestbars: 2,
-  abs: 1, min: 2, max: 2, log: 1, sqrt: 1, ref: 2, prev: 1, held: 2, series: 3,
+  abs: 1, min: 2, max: 2, log: 1, sqrt: 1, exp: 1, ref: 2, prev: 1, held: 2, series: 3,
   true_range: 0, typical_price: 0, rsi: 2,
   line: 1, histogram: 1, band: 2, marker: 3, barcolor: 3, background: 2, fill: 3,
 };
