@@ -1666,7 +1666,7 @@ git commit -m "feat: series() multi-timeframe reads and session/exchange context
 - Consumes: `IndicatorOutput` (Task 3), evaluated series
 - Produces: `buildOutput(name: string, node: CallNode, series: (number|boolean)[], bars: OHLCV[]): IndicatorOutput | null` — consumed by Task 12's orchestration. Returns `null` for a bare (unwrapped) formula.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```typescript
 // src/engine/outputs.test.ts
@@ -1744,12 +1744,12 @@ describe("buildOutput", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npm test -- outputs`
 Expected: FAIL — `Cannot find module './outputs'`
 
-- [ ] **Step 3: Write `buildOutput`**
+- [x] **Step 3: Write `buildOutput`**
 
 ```typescript
 // src/engine/outputs.ts
@@ -1849,12 +1849,12 @@ function evaluateStringArg(node: ASTNode, ctx: EvalContext): string {
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npm test -- outputs`
 Expected: PASS — 7 tests
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/engine/outputs.ts src/engine/outputs.test.ts
@@ -1873,7 +1873,7 @@ git commit -m "feat: output wrappers — line/band/marker/histogram/barcolor/bac
 - Consumes: everything from Tasks 1-11
 - Produces: `evaluate(source: string, bars: OHLCV[], adapter: DataAdapter, symbolTicker: string, inputOverrides?): Promise<EvaluationResult>` — the top-level public API, consumed by Task 13's render adapter and Task 14's end-to-end test.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```typescript
 // src/engine/engine.test.ts
@@ -1924,12 +1924,12 @@ describe("evaluate", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npm test -- engine.test`
 Expected: FAIL — `Cannot find module './engine'`
 
-- [ ] **Step 3: Write the orchestration**
+- [x] **Step 3: Write the orchestration**
 
 ```typescript
 // src/engine/engine.ts
@@ -1992,7 +1992,7 @@ export async function evaluate(
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npm test -- engine.test`
 Expected: PASS — 5 tests
@@ -2000,7 +2000,7 @@ Expected: PASS — 5 tests
 Run: `npm test` (full suite)
 Expected: PASS — all tests
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/engine/engine.ts src/engine/engine.test.ts
