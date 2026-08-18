@@ -999,7 +999,7 @@ git commit -m "feat: windowed functions — sma/ema/wma/stdev/highest/lowest/sum
 - Consumes: `EvalContext.self` (Task 3) for `prev`'s self-reference
 - Produces: `ref`/`prev` cases in `evaluateCall`
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```typescript
 // src/engine/time-refs.test.ts
@@ -1048,12 +1048,12 @@ describe("ref() and prev()", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npm test -- time-refs`
 Expected: FAIL — `ref`/`prev` hit the evaluator's default `throw`
 
-- [ ] **Step 3: Extend the evaluator**
+- [x] **Step 3: Extend the evaluator**
 
 In `src/engine/evaluator.ts`'s `evaluateCall`, add before `default`:
 
@@ -1073,12 +1073,12 @@ In `src/engine/evaluator.ts`'s `evaluateCall`, add before `default`:
 
 `ref`'s lookback is arbitrary — it can look back into ANY expression (including raw price), re-evaluated at the earlier index, so out-of-range degrades to `NaN` (the "insufficient history" case from the design spec's Error handling section). `prev`'s lookback is specifically THIS formula's own running series (`ctx.self`) — defaulting to `0` rather than `NaN` before enough history exists is what lets a recursive formula (Wilder smoothing, a running total) bootstrap from bar 0 instead of being permanently `NaN`.
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npm test -- time-refs`
 Expected: PASS — 4 tests
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/engine/evaluator.ts src/engine/time-refs.test.ts
@@ -1097,7 +1097,7 @@ git commit -m "feat: ref() and prev() — bounded lookback and self-referencing 
 - Consumes: `ctx.self` (same mechanism as `prev`)
 - Produces: `held` case in `evaluateCall`
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```typescript
 // src/engine/held.test.ts
@@ -1142,12 +1142,12 @@ describe("held()", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npm test -- held`
 Expected: FAIL
 
-- [ ] **Step 3: Extend the evaluator**
+- [x] **Step 3: Extend the evaluator**
 
 In `src/engine/evaluator.ts`'s `evaluateCall`, add:
 
@@ -1159,12 +1159,12 @@ In `src/engine/evaluator.ts`'s `evaluateCall`, add:
     }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npm test -- held`
 Expected: PASS — 2 tests
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/engine/evaluator.ts src/engine/held.test.ts
@@ -1185,7 +1185,7 @@ git commit -m "feat: held() — arbitrary-duration stateful pattern tracking"
 
 `rsi(x, n)` is implemented by literally parsing and evaluating the Wilder-smoothing sub-expressions shown in the design spec, using the SAME machinery as any other formula — proving the language can express it, per the design doc's own claim.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```typescript
 // src/engine/derived.test.ts
@@ -1232,12 +1232,12 @@ describe("built-in derived series", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npm test -- derived`
 Expected: FAIL
 
-- [ ] **Step 3: Extend the evaluator**
+- [x] **Step 3: Extend the evaluator**
 
 In `src/engine/evaluator.ts`, add a helper that parses a small internal formula string once (module load time) and reuses its AST — `rsi` needs two SEPARATE self-referencing accumulators (`avg_gain`, `avg_loss`), which the single-`ctx.self`-per-formula design (Tasks 3-6) doesn't directly support for a call embedded inside another formula. Implement `rsi` as its own tiny nested evaluation, each with its own `self` array, rather than trying to force two accumulators into one `ctx.self`:
 
@@ -1280,7 +1280,7 @@ Add to `evaluateCall`'s switch:
 
 Note: `true_range`'s reference implementation above uses `ref(close, 1)` directly rather than the design spec's literal `abs(high - ref(close,1))` nested form — same result, restructured slightly to fit two-argument `max()`; verify the test's expected values match regardless of the exact nesting.
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npm test -- derived`
 Expected: PASS — 4 tests
@@ -1288,7 +1288,7 @@ Expected: PASS — 4 tests
 Run: `npm test` (full suite)
 Expected: PASS — all tests
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/engine/evaluator.ts src/engine/derived.test.ts
